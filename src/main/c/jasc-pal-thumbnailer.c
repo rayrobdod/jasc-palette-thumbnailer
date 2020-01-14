@@ -90,13 +90,13 @@ void fwrite_png_chunk(const uint8_t typ[4], const size_t datac, const uint8_t *c
 	for (size_t i = 0; i < 4; i++) {
 		crc ^= ((uint32_t) typ[i]);
 		for (size_t j = 0; j < 8; j++) {
-			crc = (crc & 1 != 0 ? PNG_CRC_POLYNOMIAL : 0) ^ (crc >> 1);
+			crc = ((crc & 1) != 0 ? PNG_CRC_POLYNOMIAL : 0) ^ (crc >> 1);
 		}
 	}
 	for (size_t i = 0; i < datac; i++) {
 		crc ^= ((uint32_t) datav[i]);
 		for (size_t j = 0; j < 8; j++) {
-			crc = (crc & 1 != 0 ? PNG_CRC_POLYNOMIAL : 0) ^ (crc >> 1);
+			crc = ((crc & 1) != 0 ? PNG_CRC_POLYNOMIAL : 0) ^ (crc >> 1);
 		}
 	}
 	crc ^= 0xFFFFFFFF;
@@ -119,15 +119,15 @@ void write_output(const struct Palette *const palette, const char *const filenam
 	size_t swatchesY = palette->count / swatchesX + (0 == palette->count % swatchesX ? 0 : 1);
 	size_t swatchWidth = dimension / swatchesX;
 	size_t swatchHeight = dimension / swatchesY;
-	bool needs_transparent = (palette->count != swatchesX * swatchesY);
+	//bool needs_transparent = (palette->count != swatchesX * swatchesY);
 	size_t post_dim_x = swatchesX * swatchWidth;
 	size_t post_dim_y = swatchesY * swatchHeight;
 
 	const uint8_t PNG_COLOR_TYPE_PAL = 3;
 	fwrite(PNG_MAGIC, 1, 8, f);
 	struct IHDR ihdr = {htonl(post_dim_x), htonl(post_dim_y), 8, PNG_COLOR_TYPE_PAL, 0, 0, 0};
-	fwrite_png_chunk("IHDR", 0x0d, (char*) &ihdr, f);
-	fwrite_png_chunk("PLTE", 3 * palette->count, (char*) palette->colors, f);
+	fwrite_png_chunk((uint8_t*) "IHDR", 0x0d, (uint8_t*) &ihdr, f);
+	fwrite_png_chunk((uint8_t*) "PLTE", 3 * palette->count, (uint8_t*) palette->colors, f);
 	struct Bitstream idat = {0};
 	struct Adler32 adler = ADLER32_INIT;
 	bitstream_init(&idat);
@@ -164,9 +164,9 @@ void write_output(const struct Palette *const palette, const char *const filenam
 	bitstream_append(&idat, 8, adler.s2);
 	bitstream_append(&idat, 8, adler.s1 >> 8);
 	bitstream_append(&idat, 8, adler.s1);
-	fwrite_png_chunk("IDAT", idat.byte_offset, idat.bufferv, f);
+	fwrite_png_chunk((uint8_t*) "IDAT", idat.byte_offset, idat.bufferv, f);
 	bitstream_deinit(&idat);
-	fwrite_png_chunk("IEND", 0, "", f);
+	fwrite_png_chunk((uint8_t*) "IEND", 0, (uint8_t*) "", f);
 
 	fclose(f);
 }

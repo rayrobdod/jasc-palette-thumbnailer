@@ -3,10 +3,12 @@ OUTDIR=bin
 INSTALL_BINARY=/usr/bin/jasc-pal-thumbnailer
 INSTALL_MIMETYPE=/usr/share/mime/packages/jasc-pal.xml
 INSTALL_THUMBNAILERS=/usr/share/thumbnailers/jasc-pal.thumbnailer
+CC=gcc
+CFLAGS=-Wall\ -Werror\ -Wextra
 
 function build_binary() {
 	mkdir -p $OUTDIR
-	gcc -o $OUTDIR/jasc-pal-thumbnailer src/main/c/jasc-pal-thumbnailer.c -lm
+	$CC $CFLAGS -o $OUTDIR/jasc-pal-thumbnailer src/main/c/jasc-pal-thumbnailer.c -lm
 }
 
 function build_thumbnailer() {

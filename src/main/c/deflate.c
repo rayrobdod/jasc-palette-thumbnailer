@@ -61,7 +61,7 @@ struct BitStrShort encode_length(uint16_t value) {
 	struct BitStrShort extra = {.len = LENGTH_EXTRA_BITS[code], .value = value};
 	bitstr_reverse(&extra);
 	struct BitStrShort retval = {
-		.value = hufcode.value + extra.value << hufcode.len,
+		.value = hufcode.value + (extra.value << hufcode.len),
 		.len = hufcode.len + extra.len,
 	};
 	return retval;
@@ -88,7 +88,7 @@ struct BitStrShort encode_offset(uint16_t value) {
 	};
 	bitstr_reverse(&extra);
 	struct BitStrShort retval = {
-		.value = hufcode.value + extra.value << hufcode.len,
+		.value = hufcode.value + (extra.value << hufcode.len),
 		.len = hufcode.len + extra.len,
 	};
 	return retval;

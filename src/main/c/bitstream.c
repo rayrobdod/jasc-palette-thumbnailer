@@ -2,7 +2,7 @@ struct BitStrShort {uint8_t len; uint16_t value;};
 
 struct Bitstream {
 	size_t bufferc;
-	char* bufferv;
+	uint8_t* bufferv;
 	size_t byte_offset;
 	uint8_t bit_offset;
 };
