@@ -138,11 +138,7 @@ void write_output(const struct Palette *const palette, const char *const filenam
 	bitstream_append(&idat, 1, 1); // last chunk
 	bitstream_append(&idat, 2, 1); // used fixed codes
 	/*
-	Turns out, natulus rencodes the thumbnailer's output anyway, which means figuring out out the optional compression doesn't actually reduce the size of the file in nautilus's cache
-
-	And since I have to figure out the raw stream to figure out the checksum anyway, writing out an approximation of the raw stream is easiest.
-
-	So, why do the huffman encoding instead of raw? So that I don't have to split the stream into 0xFFFF-sized chunks. And because I still kinda want to figure out how to write the deflated data, and this will be an easier jumping-off point than the other.
+	Turns out, natulus rencodes the thumbnailer's output anyway, which means figuring out the optimal compression doesn't actually reduce the size of the file in nautilus's cache
 	*/
 	/// deflate data
 	for (size_t i = 0; i < swatchesY; i++) {
@@ -150,8 +146,16 @@ void write_output(const struct Palette *const palette, const char *const filenam
 			bitstream_append_struct(&idat, encode_fixed_huffman_code(0));
 			adler32_push(&adler, 0);
 			for (size_t j = 0; j < swatchesX; j++) {
-				for (size_t v = 0; v < swatchWidth; v++) {
+				if (swatchWidth >= 4) {
 					bitstream_append_struct(&idat, encode_fixed_huffman_code(j + swatchesX * i));
+					bitstream_append_struct(&idat, encode_length(swatchWidth - 1));
+					bitstream_append_struct(&idat, encode_offset(0));
+				} else {
+					for (size_t v = 0; v < swatchWidth; v++) {
+						bitstream_append_struct(&idat, encode_fixed_huffman_code(j + swatchesX * i));
+					}
+				}
+				for (size_t v = 0; v < swatchWidth; v++) {
 					adler32_push(&adler, j + swatchesX * i);
 				}
 			}

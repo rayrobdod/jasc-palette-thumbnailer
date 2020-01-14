@@ -1,3 +1,8 @@
+/*
+   "DEFLATE Compressed Data Format Specification" <http://www.w3.org/Graphics/PNG/RFC-1951>
+   "ZLIB Compressed Data Format Specification" <https://www.ietf.org/rfc/rfc1950.txt>
+ */
+
 struct Adler32 {uint32_t s1; uint32_t s2;};
 
 
@@ -53,13 +58,12 @@ struct BitStrShort encode_length(uint16_t value) {
 	
 	uint16_t code = 0;
 	value -= 3;
-	while (value > (1 << LENGTH_EXTRA_BITS[code])) {
-		code++;
+	while (value >= (1 << LENGTH_EXTRA_BITS[code])) {
 		value -= 1 << LENGTH_EXTRA_BITS[code];
+		code++;
 	}
 	struct BitStrShort hufcode = encode_fixed_huffman_code(257 + code);
 	struct BitStrShort extra = {.len = LENGTH_EXTRA_BITS[code], .value = value};
-	bitstr_reverse(&extra);
 	struct BitStrShort retval = {
 		.value = hufcode.value + (extra.value << hufcode.len),
 		.len = hufcode.len + extra.len,
@@ -86,7 +90,6 @@ struct BitStrShort encode_offset(uint16_t value) {
 		.len = DISTANCE_EXTRA_BITS[code],
 		.value = value,
 	};
-	bitstr_reverse(&extra);
 	struct BitStrShort retval = {
 		.value = hufcode.value + (extra.value << hufcode.len),
 		.len = hufcode.len + extra.len,
