@@ -1,30 +1,31 @@
 #include <arpa/inet.h>
-#include <getopt.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include <math.h>
 #include "bitstream.c"
 #include "deflate.c"
 
+const char PROGRAM_NAME[] = "jasc-pal-thumbnailer";
+const char PROGRAM_VERSION[] = "0000.00.00";
+const char PROGRAM_HOMEPAGE[] = "";
+const char PROGRAM_DESCRIPTION[] = "A thumbnailer for JASC-PAL files";
 
-const struct option long_options[] = {
-	{"help", no_argument, 0, 'h'},
-	{"size", required_argument, 0, 's'},
-	{"input", required_argument, 0, 'i'},
-	{"output", required_argument, 0, 'o'},
-	{0}
-};
 #define PAL_MAGIC "JASC-PAL"
 const char PNG_MAGIC[8] = "\x89PNG\r\n\x1a\n";
 const uint32_t PNG_CRC_POLYNOMIAL = 0xEDB88320;
 
+
 struct Options {
+	enum {FREE, SIZE, INPUT, OUTPUT, FORCE_POSITIONAL} next_argument;
 	bool help;
+	bool version;
 	int size;
-	char *input;
-	char *output;
+	const char *program_name;
+	const char *input;
+	const char *output;
 };
 
 struct RGB {
@@ -175,40 +176,86 @@ void write_output(const struct Palette *const palette, const char *const filenam
 	fclose(f);
 }
 
-void print_usage() {
-	printf("thumbnailer -i infile -o outfile -s outdim\n");
+
+void print_usage(const char *const program_name) {
+	printf("  %s -s outdim [-i infile] [-o outfile]\n", program_name);
+	printf("  %s --help|--version\n", program_name);
+	printf("\n");
+	printf("%s\n", PROGRAM_DESCRIPTION);
+	printf("\n");
+	printf("  %-3s %-20s %-s\n", "-?,", "--help", "Display this help message");
+	printf("  %-3s %-20s %-s\n", "", "--version", "Display program version");
+	printf("  %-3s %-20s %-s\n", "-s,", "--size", "The dimensions of the output file.");
+	printf("  %-3s %-20s %-s\n", "-i,", "--input", "The input file. stdin if not specified.");
+	printf("  %-3s %-20s %-s\n", "-o,", "--output", "The output file. stdout if not specified.");
 }
 
-int main(int argc, char** argv) {
-	int __getopt_long_i__;
-	struct Options Options = {0};
-	while (1) {
-		int opt = getopt_long(argc, argv, "hs:i:o:", long_options, &__getopt_long_i__);
-		if (opt == -1) {
-			break;
-		}
-		switch (opt) {
-		case 'h':
-			Options.help = true;
-			break;
-		case 's':
-			Options.size = atoi(optarg);
-			break;
-		case 'i':
-			Options.input = optarg;
-			break;
-		case 'o':
-			Options.output = optarg;
-			break;
-		default:
-			print_usage();
+void options_push(struct Options *const options, const char* const arg) {
+	char arg_zeroth_char = (arg ? arg[0] : '\0');
+	switch (options->next_argument) {
+	case SIZE:
+		options->size = atoi(arg);
+		options->next_argument = FREE;
+		break;
+	case INPUT:
+		options->input = arg;
+		options->next_argument = FREE;
+		break;
+	case OUTPUT:
+		options->output = arg;
+		options->next_argument = FREE;
+		break;
+	case FORCE_POSITIONAL:
+		goto positional;
+	case FREE:
+		if (arg_zeroth_char != '-') {
+			goto positional;
+		} else if (0 == strcmp(arg, "--")) {
+			options->next_argument = FORCE_POSITIONAL;
+		} else if (0 == strcmp(arg, "--size") || 0 == strcmp(arg, "-s")) {
+			options->next_argument = SIZE;
+		} else if (0 == strcmp(arg, "--input") || 0 == strcmp(arg, "-i")) {
+			options->next_argument = INPUT;
+		} else if (0 == strcmp(arg, "--output") || 0 == strcmp(arg, "-o")) {
+			options->next_argument = OUTPUT;
+		} else if (0 == strcmp(arg, "--version")) {
+			options->version = true;
+		} else if (0 == strcmp(arg, "--help") || 0 == strcmp(arg, "-?") || 0 == strcmp(arg, "-?")) {
+			options->help = true;
+		} else {
+			fprintf(stderr, "Unknown flag\n");
 			exit(1);
-			break;
 		}
 	}
+	return;
 
-	if (Options.help || Options.size == 0) {
-		print_usage();
+positional:
+	if (NULL == options->program_name) {
+		options->program_name = arg;
+	} else {
+		fprintf(stderr, "Too many positional arguments\n");
+		exit(1);
+	}
+}
+
+
+int main(int argc, char** argv) {
+	struct Options Options = {0};
+	for (int i = 0; i < argc; i++) {
+		options_push(&Options, argv[i]);
+	}
+
+	if (Options.help) {
+		print_usage(argv[0]);
+		return 0;
+	}
+	if (Options.version) {
+		printf("%s %s\n", PROGRAM_NAME, PROGRAM_VERSION);
+		printf("%s\n", PROGRAM_HOMEPAGE);
+		return 0;
+	}
+	if (Options.size == 0) {
+		print_usage(argv[0]);
 		return 0;
 	}
 
