@@ -1,4 +1,3 @@
-#include <arpa/inet.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,6 +6,19 @@
 #include <math.h>
 #include "bitstream.c"
 #include "deflate.c"
+
+#ifdef _MSC_VER
+	uint32_t htonl(uint32_t in) {
+		// MSVC only does i686, x86_64 or ARMEL, all little endian
+		return
+			((in & 0xFF000000) >> 24) |
+			((in & 0x00FF0000) >> 8) |
+			((in & 0x0000FF00) << 8) |
+			((in & 0x000000FF) << 24);
+	}
+#else
+	#include <arpa/inet.h>
+#endif
 
 const char PROGRAM_NAME[] = "jasc-pal-thumbnailer";
 const char PROGRAM_VERSION[] = "0000.00.00";
