@@ -1,12 +1,8 @@
-struct BitStrShort {uint8_t len; uint16_t value;};
+#include "bitstream.h"
 
-struct Bitstream {
-	size_t bufferc;
-	uint8_t* bufferv;
-	size_t byte_offset;
-	uint8_t bit_offset;
-};
-
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
 
 void bitstr_reverse(struct BitStrShort *const this) {
 	uint16_t newval = 0;

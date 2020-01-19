@@ -1,0 +1,8 @@
+*.c	text	diff=cpp
+*.h	text	diff=cpp
+*.md	text	diff=markdown
+*.pal	text	diff=jasc-palette	eol=crlf
+*.png	binary	diff=png
+*.ps1	text	diff=powershell
+*.sh	text	diff=bash	eol=lf
+.gitattributes	text	filter=sort

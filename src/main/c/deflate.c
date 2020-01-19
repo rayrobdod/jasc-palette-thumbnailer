@@ -1,10 +1,10 @@
+#include "deflate.h"
 /*
    "DEFLATE Compressed Data Format Specification" <http://www.w3.org/Graphics/PNG/RFC-1951>
    "ZLIB Compressed Data Format Specification" <https://www.ietf.org/rfc/rfc1950.txt>
  */
 
-struct Adler32 {uint32_t s1; uint32_t s2;};
-
+#include <stdio.h>
 
 /// The extra bits following a length code to store
 /// the actual value of the code
@@ -97,8 +97,6 @@ struct BitStrShort encode_offset(uint16_t value) {
 	return retval;
 }
 
-
-#define ADLER32_INIT {.s1 = 1, .s2 = 0}
 
 void adler32_push(struct Adler32 *const this, uint8_t value) {
 	const uint32_t ADLER32_DIVISOR = 65521;

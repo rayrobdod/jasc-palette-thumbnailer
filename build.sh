@@ -8,7 +8,11 @@ CFLAGS=-Wall\ -Werror\ -Wextra
 
 function build_binary() {
 	mkdir -p $OUTDIR
-	$CC $CFLAGS -o $OUTDIR/jasc-pal-thumbnailer src/main/c/jasc-pal-thumbnailer.c -lm
+	$CC $CFLAGS -o $OUTDIR/jasc-pal-thumbnailer \
+		src/main/c/bitstream.c \
+		src/main/c/deflate.c \
+		src/main/c/jasc-pal-thumbnailer.c \
+		-lm
 }
 
 function build_thumbnailer() {
@@ -34,5 +38,5 @@ case $1 in
 'build_thumbnailer') build_thumbnailer ;;
 'build') build_binary ; build_thumbnailer ;;
 'install') install ;;
-*) echo "usage: ./build.sh clean|build|install" ;;
+*) echo "usage: ./build.sh clean|build_binary|build_thumbnailer|build|install" ;;
 esac

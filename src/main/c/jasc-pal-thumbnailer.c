@@ -4,8 +4,8 @@
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
-#include "bitstream.c"
-#include "deflate.c"
+#include "bitstream.h"
+#include "deflate.h"
 
 #ifdef _MSC_VER
 	uint32_t htonl(uint32_t in) {
@@ -29,7 +29,7 @@ const char PROGRAM_DESCRIPTION[] = "A thumbnailer for JASC-PAL files";
 const char PNG_MAGIC[8] = "\x89PNG\r\n\x1a\n";
 const uint32_t PNG_CRC_POLYNOMIAL = 0xEDB88320;
 
-
+/** Deserialized program options */
 struct Options {
 	enum {FREE, SIZE, INPUT, OUTPUT, FORCE_POSITIONAL} next_argument;
 	bool help;
@@ -40,15 +40,18 @@ struct Options {
 	const char *output;
 };
 
+/** A 24-bit color */
 struct RGB {
 	uint8_t red;
 	uint8_t green;
 	uint8_t blue;
 };
+/** A set of colors */
 struct Palette {
 	size_t count;
 	struct RGB *colors;
 };
+/** The payload of a png header chunk */
 struct IHDR {
 	uint32_t width;
 	uint32_t height;
@@ -59,6 +62,7 @@ struct IHDR {
 	uint8_t interlaceMethod;
 };
 
+/** Parse a jasc-pal file, and put the contents into a Palette */
 void parse_input(struct Palette *const retval, const char *const filename) {
 	FILE *f;
 	if (filename) {
@@ -93,6 +97,7 @@ void parse_input(struct Palette *const retval, const char *const filename) {
 	fclose(f);
 }
 
+/** Write a png chunk to the given file */
 void fwrite_png_chunk(const uint8_t typ[4], const size_t datac, const uint8_t *const datav, FILE *const f) {
 	uint32_t datac_writable = htonl((uint32_t) datac);
 	fwrite(&datac_writable, 4, 1, f);
@@ -117,6 +122,7 @@ void fwrite_png_chunk(const uint8_t typ[4], const size_t datac, const uint8_t *c
 	fwrite(&crc, 4, 1, f);
 }
 
+/** Writes a png file, with the given pixel dimension, representing the given palette, to the given file */
 void write_output(const struct Palette *const palette, const char *const filename, const size_t dimension) {
 	FILE *f;
 	if (filename) {
@@ -189,6 +195,7 @@ void write_output(const struct Palette *const palette, const char *const filenam
 }
 
 
+/** Print a usage statement */
 void print_usage(const char *const program_name) {
 	printf("  %s -s outdim [-i infile] [-o outfile]\n", program_name);
 	printf("  %s --help|--version\n", program_name);
@@ -202,6 +209,11 @@ void print_usage(const char *const program_name) {
 	printf("  %-3s %-20s %-s\n", "-o,", "--output", "The output file. stdout if not specified.");
 }
 
+/**
+ * Append the given arg to the options struct
+ *
+ * This should be called in a loop for each argv in order from zeroth to argc-minus-oneth
+ */
 void options_push(struct Options *const options, const char* const arg) {
 	char arg_zeroth_char = (arg ? arg[0] : '\0');
 	switch (options->next_argument) {
