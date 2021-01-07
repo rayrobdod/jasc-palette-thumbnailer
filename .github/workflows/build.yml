@@ -1,0 +1,31 @@
+name: Build
+on: [push]
+jobs:
+  ubuntu-release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: build
+      run: ./build.sh build_binary
+    - uses: actions/upload-artifact@master
+      with:
+        name: jasc-pal-thumbnailer
+        path: bin/jasc-pal-thumbnailer
+  windows-release:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: ilammy/msvc-dev-cmd@v1
+    - run: mkdir bin
+    - name: bitstream.c
+      run: cl /c src\main\c\bitstream.c /Fo:bin\bitstream.obj
+    - name: deflate.c
+      run: cl /c src\main\c\deflate.c /Fo:bin\deflate.obj
+    - name: jasc-pal-thumbnailer.c
+      run: cl /c src\main\c\jasc-pal-thumbnailer.c /Fo:bin\jasc-pal-thumbnailer.obj
+    - name: link
+      run: link bin\bitstream.obj bin\deflate.obj bin\jasc-pal-thumbnailer.obj /OUT:bin\jasc-pal-thumbnailer.exe
+    - uses: actions/upload-artifact@master
+      with:
+        name: jasc-pal-thumbnailer.exe
+        path: bin/jasc-pal-thumbnailer.exe
