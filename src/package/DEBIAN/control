@@ -1,0 +1,10 @@
+Package: jasc-pal-thumbnailer
+Version: SNAPSHOT
+Architecture: amd64
+Essential: no
+Section: graphics
+Priority: optional
+Depends: 
+Maintainer: Raymond Dodge
+Installed-Size: 22
+Description: Generates thumbnails for JASC palette files

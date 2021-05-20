@@ -1,6 +1,7 @@
 #!/bin/bash
 OUTDIR=bin
 INSTALL_BINARY=/usr/bin/jasc-pal-thumbnailer
+INSTALL_DOCS=/usr/share/doc/jasc-pal-thumbnailer/
 INSTALL_MIMETYPE=/usr/share/mime/packages/jasc-pal.xml
 INSTALL_THUMBNAILERS=/usr/share/thumbnailers/jasc-pal.thumbnailer
 CC=gcc
@@ -22,6 +23,27 @@ function build_thumbnailer() {
 	echo "MimeType=application/x-jasc-palette;">>$OUTDIR/jasc-pal.thumbnailer
 }
 
+function build_package() {
+	build_binary
+	build_thumbnailer
+
+	mkdir -p $OUTDIR/pkg-debian/DEBIAN
+	mkdir -p $OUTDIR/pkg-debian/usr/bin
+	mkdir -p $OUTDIR/pkg-debian/usr/share/mime/packages
+	mkdir -p $OUTDIR/pkg-debian/usr/share/thumbnailers
+	mkdir -p $OUTDIR/pkg-debian/usr/share/doc/jasc-pal-thumbnailer
+
+	cp $OUTDIR/jasc-pal-thumbnailer $OUTDIR/pkg-debian/$INSTALL_BINARY
+	cp $OUTDIR/jasc-pal.thumbnailer $OUTDIR/pkg-debian/$INSTALL_THUMBNAILERS
+	cp src/package/mime-info/jasc-pal.xml $OUTDIR/pkg-debian/$INSTALL_MIMETYPE
+	cp src/package/doc/* $OUTDIR/pkg-debian/$INSTALL_DOCS
+	cp README.md $OUTDIR/pkg-debian/$INSTALL_DOCS/README.md
+	cp src/package/DEBIAN/* $OUTDIR/pkg-debian/DEBIAN/
+	find . -type f ! -regex '.*?DEBIAN.*' -printf '%P ' | xargs md5sum >$OUTDIR/pkg-debian/DEBIAN/md5sums
+
+	dpkg -b $OUTDIR/pkg-debian/ $OUTDIR/jasc-pal-thumbnailer.deb
+}
+
 function install() {
 	build_binary
 	build_thumbnailer
@@ -36,6 +58,7 @@ case $1 in
 'clean') rm -r $OUTDIR ;;
 'build_binary') build_binary ;;
 'build_thumbnailer') build_thumbnailer ;;
+'build_package') build_package ;;
 'build') build_binary ; build_thumbnailer ;;
 'install') install ;;
 *) echo "usage: ./build.sh clean|build_binary|build_thumbnailer|build|install" ;;
