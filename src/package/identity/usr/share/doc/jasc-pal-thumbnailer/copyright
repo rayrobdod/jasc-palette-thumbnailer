@@ -1,0 +1,10 @@
+Upstream-Name: jasc-pal-thumbnailer
+Upstream-Contact: Raymond Dodge <git@rayrobdod.name>
+Source: https://github.com/rayrobdod/jasc-palette-thumbnailer/
+
+Files: *
+Copyright: 2020-2021, Raymond Dodge <git@rayrobdod.name>
+License: Apache-2.0
+ On Debian systems the full text of the Apache License,
+ Version 2.0 can be found in the
+ `/usr/share/common-licenses/Apache-2.0' file.

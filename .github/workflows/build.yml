@@ -5,12 +5,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
-    - name: build
+    - name: build_binary
       run: ./build.sh build_binary
     - uses: actions/upload-artifact@master
       with:
         name: jasc-pal-thumbnailer
         path: bin/jasc-pal-thumbnailer
+    - name: build_package
+      run: ./build.sh build_package
+    - uses: actions/upload-artifact@master
+      with:
+        name: jasc-pal-thumbnailer.deb
+        path: bin/jasc-pal-thumbnailer.deb
   windows-release:
     runs-on: windows-latest
     steps:
