@@ -27,19 +27,15 @@ function build_package() {
 	build_binary
 	build_thumbnailer
 
-	mkdir -p $OUTDIR/pkg-debian/DEBIAN
 	mkdir -p $OUTDIR/pkg-debian/usr/bin
 	mkdir -p $OUTDIR/pkg-debian/usr/share/mime/packages
 	mkdir -p $OUTDIR/pkg-debian/usr/share/thumbnailers
-	mkdir -p $OUTDIR/pkg-debian/usr/share/doc/jasc-pal-thumbnailer
 
 	cp $OUTDIR/jasc-pal-thumbnailer $OUTDIR/pkg-debian/$INSTALL_BINARY
 	cp $OUTDIR/jasc-pal.thumbnailer $OUTDIR/pkg-debian/$INSTALL_THUMBNAILERS
-	cp src/package/mime-info/jasc-pal.xml $OUTDIR/pkg-debian/$INSTALL_MIMETYPE
-	cp src/package/doc/* $OUTDIR/pkg-debian/$INSTALL_DOCS
 	cp README.md $OUTDIR/pkg-debian/$INSTALL_DOCS/README.md
-	cp src/package/DEBIAN/* $OUTDIR/pkg-debian/DEBIAN/
-	find . -type f ! -regex '.*?DEBIAN.*' -printf '%P ' | xargs md5sum >$OUTDIR/pkg-debian/DEBIAN/md5sums
+	cp -r src/package/identity/* $OUTDIR/pkg-debian/
+	pushd $OUTDIR/pkg-debian/; find . -type f ! -regex '.*?DEBIAN.*' -printf '%P ' | xargs md5sum >DEBIAN/md5sums; popd
 
 	dpkg -b $OUTDIR/pkg-debian/ $OUTDIR/jasc-pal-thumbnailer.deb
 }
