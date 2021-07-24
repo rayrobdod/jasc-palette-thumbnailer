@@ -7,4 +7,4 @@ Priority: optional
 Depends:
 Maintainer: Raymond Dodge
 Installed-Size: INSTALLED_SIZE
-Description: Generates thumbnails for JASC palette files
+Description: thumbnailer for JASC palette files
