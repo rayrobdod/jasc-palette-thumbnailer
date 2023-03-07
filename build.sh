@@ -4,7 +4,7 @@ INSTALL_BINARY=/usr/bin/jasc-pal-thumbnailer
 INSTALL_DOCS=/usr/share/doc/jasc-pal-thumbnailer/
 CC=gcc
 CFLAGS=-Wall\ -Werror\ -Wextra
-VERSION=2023.03.07
+VERSION=$(date -I)-$(git rev-parse --short HEAD)
 
 function build_binary() {
 	mkdir -p $OUTDIR
