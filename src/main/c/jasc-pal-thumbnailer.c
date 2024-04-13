@@ -22,7 +22,7 @@
 
 const char PROGRAM_NAME[] = "jasc-pal-thumbnailer";
 const char PROGRAM_VERSION[] = "0000.00.00";
-const char PROGRAM_HOMEPAGE[] = "";
+const char PROGRAM_HOMEPAGE[] = "https://rayrobdod.name/programming/programs/jascPaletteThumbnailer/";
 const char PROGRAM_DESCRIPTION[] = "A thumbnailer for JASC-PAL files";
 
 #define PAL_MAGIC "JASC-PAL"
@@ -157,8 +157,9 @@ void write_output(const struct Palette *const palette, const char *const filenam
 	bitstream_append(&idat, 1, 1); // last chunk
 	bitstream_append(&idat, 2, 1); // used fixed codes
 	/*
-	Turns out, natulus rencodes the thumbnailer's output anyway, which means figuring out the optimal compression doesn't actually reduce the size of the file in nautilus's cache
-	*/
+	 * Turns out, GNOME ThumbnailFactory rencodes the thumbnailer's output anyway,
+	 * which means figuring out the optimal compression doesn't actually reduce the size of the file in the thumbnail cache
+	 */
 	/// deflate data
 	for (size_t i = 0; i < swatchesY; i++) {
 		for (size_t u = 0; u < swatchHeight; u++) {
