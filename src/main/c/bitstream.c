@@ -47,7 +47,7 @@ void bitstream_extend(struct Bitstream *const this, const size_t min_capacity) {
 }
 
 void bitstream_append(struct Bitstream *const this, const uint8_t bitsc, const uint32_t bitsv) {
-	bitstream_extend(this, this->byte_offset + 1);
+	bitstream_extend(this, this->byte_offset + 1 + bitsc / 8);
 	int avaliableBitsInByte = 8 - this->bit_offset % 8;
 	if (avaliableBitsInByte > bitsc) {
 		this->bufferv[this->byte_offset] |= ((bitsv & ((1 << bitsc) - 1)) << this->bit_offset);

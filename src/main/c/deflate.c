@@ -73,13 +73,13 @@ struct BitStrShort encode_length(uint16_t value) {
 
 struct BitStrShort encode_offset(uint16_t value) {
 	if (value > 32768) {
-		fprintf(stderr, "Value error: encode_length value greater than 32768");
+		fprintf(stderr, "Value error: encode_offset value greater than 32768");
 		exit(1);
 	}
 	uint16_t code = 0;
-	while (value > DISTANCE_EXTRA_BITS[code]) {
-		code++;
+	while (value >= (1 << DISTANCE_EXTRA_BITS[code])) {
 		value -= 1 << DISTANCE_EXTRA_BITS[code];
+		code++;
 	}
 	struct BitStrShort hufcode = {
 		.len = 5,
@@ -98,10 +98,17 @@ struct BitStrShort encode_offset(uint16_t value) {
 }
 
 
+const uint32_t ADLER32_DIVISOR = 65521;
 void adler32_push(struct Adler32 *const this, uint8_t value) {
-	const uint32_t ADLER32_DIVISOR = 65521;
 	this->s1 += value;
 	this->s1 %= ADLER32_DIVISOR;
 	this->s2 += this->s1;
 	this->s2 %= ADLER32_DIVISOR;
+}
+
+void adler32_pushZeroRepeatedly(struct Adler32 *const this, size_t numZeros) {
+	for (size_t i = 0; i < numZeros; i++) {
+		this->s2 += this->s1;
+		this->s2 %= ADLER32_DIVISOR;
+	}
 }

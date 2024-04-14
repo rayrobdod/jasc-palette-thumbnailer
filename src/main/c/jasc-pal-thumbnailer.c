@@ -29,6 +29,10 @@ const char PROGRAM_DESCRIPTION[] = "A thumbnailer for JASC-PAL files";
 const char PNG_MAGIC[8] = "\x89PNG\r\n\x1a\n";
 const uint32_t PNG_CRC_POLYNOMIAL = 0xEDB88320;
 
+#define PNG_FILTER_TYPE_NONE (0)
+#define PNG_FILTER_TYPE_SUB (1)
+#define PNG_FILTER_TYPE_UP (2)
+
 /** Deserialized program options */
 struct Options {
 	enum {FREE, SIZE, INPUT, OUTPUT, FORCE_POSITIONAL} next_argument;
@@ -122,6 +126,25 @@ void fwrite_png_chunk(const uint8_t typ[4], const size_t datac, const uint8_t *c
 	fwrite(&crc, 4, 1, f);
 }
 
+/** Writes a deflate length-offset pair to the stream,
+ * including writing multiple pairs if length is more than 258
+ */
+void bitstream_append_length_offset(struct Bitstream *const stream, uint32_t length, uint16_t offset) {
+	while (length > DEFLATE_LENGTH_MAX) {
+		if (length < DEFLATE_LENGTH_MAX + DEFLATE_LENGTH_MIN) {
+			bitstream_append_struct(stream, encode_length(DEFLATE_LENGTH_MIN));
+			bitstream_append_struct(stream, encode_offset(offset));
+			length -= DEFLATE_LENGTH_MIN;
+		} else {
+			bitstream_append_struct(stream, encode_length(DEFLATE_LENGTH_MAX));
+			bitstream_append_struct(stream, encode_offset(offset));
+			length -= DEFLATE_LENGTH_MAX;
+		}
+	}
+	bitstream_append_struct(stream, encode_length(length));
+	bitstream_append_struct(stream, encode_offset(offset));
+}
+
 /** Writes a png file, with the given pixel dimension, representing the given palette, to the given file */
 void write_output(const struct Palette *const palette, const char *const filename, const size_t dimension) {
 	FILE *f;
@@ -136,15 +159,19 @@ void write_output(const struct Palette *const palette, const char *const filenam
 	}
 	size_t swatchesX = (size_t) floor(sqrt((double) palette->count));
 	size_t swatchesY = palette->count / swatchesX + (0 == palette->count % swatchesX ? 0 : 1);
-	size_t swatchWidth = dimension / swatchesX;
-	size_t swatchHeight = dimension / swatchesY;
+	size_t swatchWidths[swatchesX];
+	for (size_t i = 0; i < swatchesX; i++) {
+		swatchWidths[i] = (((i + 1) * dimension) / swatchesX) - ((i * dimension) / swatchesX);
+	}
+	size_t swatchHeights[swatchesY];
+	for (size_t i = 0; i < swatchesY; i++) {
+		swatchHeights[i] = (((i + 1) * dimension) / swatchesY) - ((i * dimension) / swatchesY);
+	}
 	//bool needs_transparent = (palette->count != swatchesX * swatchesY);
-	size_t post_dim_x = swatchesX * swatchWidth;
-	size_t post_dim_y = swatchesY * swatchHeight;
 
 	const uint8_t PNG_COLOR_TYPE_PAL = 3;
 	fwrite(PNG_MAGIC, 1, 8, f);
-	struct IHDR ihdr = {htonl(post_dim_x), htonl(post_dim_y), 8, PNG_COLOR_TYPE_PAL, 0, 0, 0};
+	struct IHDR ihdr = {htonl(dimension), htonl(dimension), 8, PNG_COLOR_TYPE_PAL, 0, 0, 0};
 	fwrite_png_chunk((uint8_t*) "IHDR", 0x0d, (uint8_t*) &ihdr, f);
 	fwrite_png_chunk((uint8_t*) "PLTE", 3 * palette->count, (uint8_t*) palette->colors, f);
 	struct Bitstream idat = {0};
@@ -161,22 +188,60 @@ void write_output(const struct Palette *const palette, const char *const filenam
 	 * which means figuring out the optimal compression doesn't actually reduce the size of the file in the thumbnail cache
 	 */
 	/// deflate data
-	for (size_t i = 0; i < swatchesY; i++) {
-		for (size_t u = 0; u < swatchHeight; u++) {
-			bitstream_append_struct(&idat, encode_fixed_huffman_code(0));
-			adler32_push(&adler, 0);
+	{
+		{
+			adler32_push(&adler, PNG_FILTER_TYPE_SUB);
 			for (size_t j = 0; j < swatchesX; j++) {
-				if (swatchWidth >= 4) {
-					bitstream_append_struct(&idat, encode_fixed_huffman_code(j + swatchesX * i));
-					bitstream_append_struct(&idat, encode_length(swatchWidth - 1));
-					bitstream_append_struct(&idat, encode_offset(0));
-				} else {
-					for (size_t v = 0; v < swatchWidth; v++) {
-						bitstream_append_struct(&idat, encode_fixed_huffman_code(j + swatchesX * i));
-					}
+				adler32_push(&adler, (j == 0 ? 0 : 1));
+				adler32_pushZeroRepeatedly(&adler, swatchWidths[j] - 1);
+			}
+			for (size_t u = 1; u < swatchHeights[0]; u++) {
+				adler32_push(&adler, PNG_FILTER_TYPE_UP);
+				adler32_pushZeroRepeatedly(&adler, dimension);
+			}
+		}
+
+		for (size_t i = 1; i < swatchesY; i++) {
+			adler32_push(&adler, PNG_FILTER_TYPE_UP);
+			for (size_t v = 0; v < dimension; v++) {
+				adler32_push(&adler, swatchesX);
+			}
+			for (size_t u = 1; u < swatchHeights[i]; u++) {
+				adler32_push(&adler, PNG_FILTER_TYPE_UP);
+				adler32_pushZeroRepeatedly(&adler, dimension);
+			}
+		}
+	}
+	{
+		{
+			bitstream_append_struct(&idat, encode_fixed_huffman_code(PNG_FILTER_TYPE_SUB));
+			for (size_t j = 0; j < swatchesX; j++) {
+				bitstream_append_struct(&idat, encode_fixed_huffman_code(j == 0 ? 0 : 1));
+				for (size_t v = 1; v < swatchWidths[j]; v++) {
+					bitstream_append_struct(&idat, encode_fixed_huffman_code(0));
 				}
-				for (size_t v = 0; v < swatchWidth; v++) {
-					adler32_push(&adler, j + swatchesX * i);
+			}
+			if (swatchHeights[0] > 1) {
+				bitstream_append_struct(&idat, encode_fixed_huffman_code(PNG_FILTER_TYPE_UP));
+				bitstream_append_struct(&idat, encode_fixed_huffman_code(0));
+				bitstream_append_length_offset(&idat, dimension - 1, 0);
+				if (swatchHeights[0] > 2) {
+					bitstream_append_length_offset(&idat, (swatchHeights[0] - 2) * (dimension + 1), dimension);
+				}
+			}
+		}
+
+		for (size_t i = 1; i < swatchesY; i++) {
+			bitstream_append_struct(&idat, encode_fixed_huffman_code(PNG_FILTER_TYPE_UP));
+			bitstream_append_struct(&idat, encode_fixed_huffman_code(swatchesX));
+			bitstream_append_length_offset(&idat, dimension - 1, 0);
+
+			if (swatchHeights[i] > 1) {
+				bitstream_append_struct(&idat, encode_fixed_huffman_code(PNG_FILTER_TYPE_UP));
+				bitstream_append_struct(&idat, encode_fixed_huffman_code(0));
+				bitstream_append_length_offset(&idat, dimension - 1, 0);
+				if (swatchHeights[i] > 2) {
+					bitstream_append_length_offset(&idat, (swatchHeights[i] - 2) * (dimension + 1), dimension);
 				}
 			}
 		}
