@@ -159,11 +159,11 @@ void write_output(const struct Palette *const palette, const char *const filenam
 	}
 	size_t swatchesX = (size_t) floor(sqrt((double) palette->count));
 	size_t swatchesY = palette->count / swatchesX + (0 == palette->count % swatchesX ? 0 : 1);
-	size_t swatchWidths[swatchesX];
+	size_t *swatchWidths = calloc(swatchesX, sizeof(size_t));
 	for (size_t i = 0; i < swatchesX; i++) {
 		swatchWidths[i] = (((i + 1) * dimension) / swatchesX) - ((i * dimension) / swatchesX);
 	}
-	size_t swatchHeights[swatchesY];
+	size_t *swatchHeights = calloc(swatchesY, sizeof(size_t));
 	for (size_t i = 0; i < swatchesY; i++) {
 		swatchHeights[i] = (((i + 1) * dimension) / swatchesY) - ((i * dimension) / swatchesY);
 	}
@@ -258,6 +258,8 @@ void write_output(const struct Palette *const palette, const char *const filenam
 	fwrite_png_chunk((uint8_t*) "IEND", 0, (uint8_t*) "", f);
 
 	fclose(f);
+	free(swatchWidths);
+	free(swatchHeights);
 }
 
 
