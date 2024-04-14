@@ -41,18 +41,18 @@ struct BitStrShort encode_fixed_huffman_code(uint16_t value) {
 		bitstr_reverse(&retval);
 		return retval;
 	} else {
-		fprintf(stderr, "Value error: encode_fixed_huffman_codes value exceeded 285");
+		fprintf(stderr, "Value error: encode_fixed_huffman_codes value exceeded 285\n");
 		exit(1);
 	}
 }
 
 struct BitStrShort encode_length(uint16_t value) {
 	if (value < 3) {
-		fprintf(stderr, "Value error: encode_length value less than 3");
+		fprintf(stderr, "Value error: encode_length value less than 3\n");
 		exit(1);
 	}
 	if (value > 258) {
-		fprintf(stderr, "Value error: encode_length value greater than 258");
+		fprintf(stderr, "Value error: encode_length value greater than 258\n");
 		exit(1);
 	}
 	
@@ -73,7 +73,7 @@ struct BitStrShort encode_length(uint16_t value) {
 
 struct BitStrShort encode_offset(uint16_t value) {
 	if (value > 32768) {
-		fprintf(stderr, "Value error: encode_offset value greater than 32768");
+		fprintf(stderr, "Value error: encode_offset value greater than 32768\n");
 		exit(1);
 	}
 	uint16_t code = 0;

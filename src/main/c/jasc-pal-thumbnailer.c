@@ -72,7 +72,7 @@ void parse_input(struct Palette *const retval, const char *const filename) {
 	if (filename) {
 		f = fopen(filename, "rb");
 		if (!f) {
-			fprintf(stderr, "Could not open file %s", filename);
+			fprintf(stderr, "Could not open file %s\n", filename);
 			exit(1);
 		}
 	} else {
@@ -151,7 +151,7 @@ void write_output(const struct Palette *const palette, const char *const filenam
 	if (filename) {
 		f = fopen(filename, "wb");
 		if (!f) {
-			fprintf(stderr, "Could not open file %s", filename);
+			fprintf(stderr, "Could not open file %s\n", filename);
 			exit(1);
 		}
 	} else {

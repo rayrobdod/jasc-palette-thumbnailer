@@ -36,7 +36,7 @@ void bitstream_extend(struct Bitstream *const this, const size_t min_capacity) {
 	if (this->bufferc < min_capacity) {
 		this->bufferv = realloc(this->bufferv, min_capacity);
 		if (! (this->bufferv)) {
-			fprintf(stderr, "memory allocation failure");
+			fprintf(stderr, "memory allocation failure\n");
 			exit(1);
 		}
 		for (size_t i = this->bufferc; i < min_capacity; i++) {
