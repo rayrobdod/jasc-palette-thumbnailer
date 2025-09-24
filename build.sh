@@ -4,11 +4,13 @@ INSTALL_BINARY=/usr/bin/jasc-pal-thumbnailer
 INSTALL_DOCS=/usr/share/doc/jasc-pal-thumbnailer/
 CC=gcc
 CFLAGS=-Wall\ -Werror\ -Wextra
-VERSION=$(date -I)-$(git rev-parse --short HEAD)
+VERSION=$(git describe --dirty | tail -c +2)
 
 function build_binary() {
 	mkdir -p $OUTDIR
+	echo "const char PROGRAM_VERSION[] = \"v$VERSION\";">$OUTDIR/metadata.c
 	$CC $CFLAGS -o $OUTDIR/jasc-pal-thumbnailer \
+		$OUTDIR/metadata.c \
 		src/main/c/bitstream.c \
 		src/main/c/deflate.c \
 		src/main/c/jasc-pal-thumbnailer.c \

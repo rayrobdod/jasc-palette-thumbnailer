@@ -21,7 +21,7 @@
 #endif
 
 const char PROGRAM_NAME[] = "jasc-pal-thumbnailer";
-const char PROGRAM_VERSION[] = "0000.00.00";
+extern const char PROGRAM_VERSION[];
 const char PROGRAM_HOMEPAGE[] = "https://rayrobdod.name/programming/programs/jascPaletteThumbnailer/";
 const char PROGRAM_DESCRIPTION[] = "A thumbnailer for JASC-PAL files";
 

@@ -5,8 +5,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
+      with:
+        filter: 'blob:none'
+        fetch-depth: 0
     - name: build_binary
       run: ./build.sh build_binary
+    - name: print binary version
+      run: bin/jasc-pal-thumbnailer --version
     - uses: actions/upload-artifact@master
       with:
         name: jasc-pal-thumbnailer
@@ -21,8 +26,17 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v5
+      with:
+        filter: 'blob:none'
+        fetch-depth: 0
     - uses: ilammy/msvc-dev-cmd@v1
     - run: mkdir bin
+    - name: metadata.c
+      run: |
+        $V1=(git describe --dirty) | Out-String
+        $V2=$V1 -replace "`n","" -replace "`r",""
+        echo "const char PROGRAM_VERSION[] = ""$V2"";" > bin\metadata.c
+        cl /c bin/metadata.c /Fo:bin\metadata.obj
     - name: bitstream.c
       run: cl /c src\main\c\bitstream.c /Fo:bin\bitstream.obj
     - name: deflate.c
@@ -30,8 +44,10 @@ jobs:
     - name: jasc-pal-thumbnailer.c
       run: cl /c src\main\c\jasc-pal-thumbnailer.c /Fo:bin\jasc-pal-thumbnailer.obj
     - name: link
-      run: link bin\bitstream.obj bin\deflate.obj bin\jasc-pal-thumbnailer.obj /OUT:bin\jasc-pal-thumbnailer.exe
+      run: link bin\metadata.obj bin\bitstream.obj bin\deflate.obj bin\jasc-pal-thumbnailer.obj /OUT:bin\jasc-pal-thumbnailer.exe
     - uses: actions/upload-artifact@master
       with:
         name: jasc-pal-thumbnailer.exe
         path: bin/jasc-pal-thumbnailer.exe
+    - name: print binary version
+      run: bin/jasc-pal-thumbnailer --version
